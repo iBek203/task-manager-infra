@@ -3,5 +3,10 @@
 *.tfstate.backup
 *.tfvars
 !*.tfvars.example
-.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
 .env

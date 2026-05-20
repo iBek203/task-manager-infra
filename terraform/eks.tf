@@ -62,7 +62,6 @@ resource "aws_iam_role_policy_attachment" "eks_fargate" {
 resource "aws_eks_cluster" "main" {
   name     = "${var.project}-eks"
   role_arn = aws_iam_role.eks_cluster.arn
-
   vpc_config {
     subnet_ids              = concat(aws_subnet.private[*].id, aws_subnet.public[*].id)
     endpoint_private_access = true

@@ -23,10 +23,6 @@ variable "private_subnet_cidrs" {
   default = ["10.0.10.0/24", "10.0.11.0/24"]
 }
 
-variable "kubernetes_version" {
-  type    = string
-  default = "1.31"
-}
 
 variable "node_instance_type" {
   type    = string

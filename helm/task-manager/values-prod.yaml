@@ -1,0 +1,27 @@
+env: prod
+
+backend:
+  replicas: 2
+  nodeSelector:
+    environment: prod
+  resources:
+    requests:
+      cpu: "256m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+frontend:
+  replicas: 2
+  nodeSelector:
+    environment: prod
+  service:
+    type: LoadBalancer
+  resources:
+    requests:
+      cpu: "256m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"

@@ -1,0 +1,32 @@
+image:
+  registry: 981548928508.dkr.ecr.us-east-1.amazonaws.com
+  tag: latest
+
+env: dev
+dbSecret: db-secret
+
+backend:
+  replicas: 1
+  image: task-manager-backend
+  nodeSelector: {}
+  resources:
+    requests:
+      cpu: "256m"
+      memory: "512Mi"
+    limits:
+      cpu: "512m"
+      memory: "1Gi"
+
+frontend:
+  replicas: 1
+  image: task-manager-frontend
+  nodeSelector: {}
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: "256m"
+      memory: "512Mi"
+    limits:
+      cpu: "512m"
+      memory: "1Gi"

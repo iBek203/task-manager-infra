@@ -1,6 +1,5 @@
 image:
   registry: 981548928508.dkr.ecr.us-east-1.amazonaws.com
-  tag: latest
 
 env: dev
 dbSecret: db-secret
@@ -8,6 +7,7 @@ dbSecret: db-secret
 backend:
   replicas: 1
   image: task-manager-backend
+  tag: latest
   nodeSelector: {}
   resources:
     requests:
@@ -20,6 +20,7 @@ backend:
 frontend:
   replicas: 1
   image: task-manager-frontend
+  tag: latest
   nodeSelector: {}
   service:
     type: ClusterIP

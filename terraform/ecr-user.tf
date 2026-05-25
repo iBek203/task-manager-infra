@@ -29,6 +29,12 @@ resource "aws_iam_user_policy" "ecr_ci" {
           aws_ecr_repository.backend.arn,
           aws_ecr_repository.frontend.arn
         ]
+      },
+      {
+        Sid      = "EKSDescribe"
+        Effect   = "Allow"
+        Action   = "eks:DescribeCluster"
+        Resource = aws_eks_cluster.main.arn
       }
     ]
   })

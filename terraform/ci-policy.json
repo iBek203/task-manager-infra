@@ -29,6 +29,12 @@
       "Sid": "IAMForTerraform",
       "Effect": "Allow",
       "Action": [
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions",
+        "iam:TagPolicy",
         "iam:CreateRole",
         "iam:DeleteRole",
         "iam:GetRole",

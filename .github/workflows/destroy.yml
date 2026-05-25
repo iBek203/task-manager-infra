@@ -26,6 +26,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Configure kubectl
+        run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name task-manager-eks
+
+      - name: Uninstall Helm releases
+        run: |
+          helm uninstall task-manager -n prod --ignore-not-found || true
+          helm uninstall task-manager -n dev --ignore-not-found || true
+          helm uninstall external-dns -n kube-system --ignore-not-found || true
+          sleep 60
+
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init

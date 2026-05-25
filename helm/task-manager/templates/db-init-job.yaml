@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+        - name: db-init
+          image: postgres:15
+          command:
+            - /bin/sh
+            - -c
+            - |
+              POSTGRES_URL="${DATABASE_URL%/*}/postgres"
+              psql "$POSTGRES_URL" -c "CREATE DATABASE taskmanager;" || true
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.dbSecret }}
+                  key: DATABASE_URL
+      restartPolicy: Never

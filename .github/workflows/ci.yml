@@ -107,6 +107,22 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name task-manager-eks
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install external-dns
+        run: |
+          helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+          helm repo update
+          helm upgrade --install external-dns external-dns/external-dns \
+            -n kube-system \
+            --set provider.name=aws \
+            --set env[0].name=AWS_DEFAULT_REGION \
+            --set env[0].value=${{ secrets.AWS_REGION }} \
+            --set domainFilters[0]=oybek.xyz \
+            --set policy=upsert-only \
+            --set txtOwnerId=task-manager-eks
+
       - name: Create namespaces and db-secrets
         working-directory: ${{ env.WORKING_DIR }}
         env:

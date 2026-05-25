@@ -42,6 +42,30 @@ resource "aws_iam_role_policy_attachment" "eks_node_ecr" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+resource "aws_iam_policy" "external_dns" {
+  name = "${var.project}-external-dns"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["route53:ChangeResourceRecordSets"]
+        Resource = ["arn:aws:route53:::hostedzone/*"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["route53:ListHostedZones", "route53:ListResourceRecordSets"]
+        Resource = ["*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_node_external_dns" {
+  role       = aws_iam_role.eks_node.name
+  policy_arn = aws_iam_policy.external_dns.arn
+}
+
 resource "aws_iam_role" "eks_fargate" {
   name = "${var.project}-eks-fargate-role"
   assume_role_policy = jsonencode({

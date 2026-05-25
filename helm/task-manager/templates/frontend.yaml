@@ -35,6 +35,10 @@ kind: Service
 metadata:
   name: frontend
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.frontend.hostname }}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.frontend.hostname }}
+  {{- end }}
 spec:
   selector:
     app: frontend

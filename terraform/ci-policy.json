@@ -78,7 +78,8 @@
         "iam:ListUserPolicies",
         "iam:CreateAccessKey",
         "iam:DeleteAccessKey",
-        "iam:ListAccessKeys"
+        "iam:ListAccessKeys",
+        "iam:ListGroupsForUser"
       ],
       "Resource": "*"
     },

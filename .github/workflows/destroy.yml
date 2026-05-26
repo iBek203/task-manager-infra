@@ -53,4 +53,6 @@ jobs:
           terraform state rm aws_iam_openid_connect_provider.github || true
           terraform state rm aws_iam_role.github_actions || true
           terraform state rm aws_iam_role_policy.github_actions || true
+          terraform state rm aws_eks_access_entry.github_actions || true
+          terraform state rm aws_eks_access_policy_association.github_actions || true
           terraform destroy -auto-approve

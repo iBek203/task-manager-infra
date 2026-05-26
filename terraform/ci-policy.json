@@ -39,6 +39,7 @@
         "iam:DeleteRole",
         "iam:GetRole",
         "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
         "iam:AttachRolePolicy",
         "iam:DetachRolePolicy",
         "iam:ListAttachedRolePolicies",

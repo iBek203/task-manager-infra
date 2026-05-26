@@ -131,4 +131,9 @@ resource "aws_eks_fargate_profile" "dev" {
   selector { namespace = "dev" }
 
   depends_on = [aws_iam_role_policy_attachment.eks_fargate]
+
+  timeouts {
+    create = "20m"
+    delete = "20m"
+  }
 }

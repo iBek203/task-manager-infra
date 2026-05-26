@@ -105,6 +105,8 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           OIDC_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
           terraform import aws_iam_openid_connect_provider.github "$OIDC_ARN" || true
+          terraform import aws_iam_role.github_actions task-manager-github-actions || true
+          terraform import aws_iam_role_policy.github_actions task-manager-github-actions:github-actions || true
 
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}

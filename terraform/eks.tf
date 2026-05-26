@@ -101,6 +101,16 @@ resource "aws_eks_cluster" "main" {
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }
 
+resource "aws_launch_template" "eks_node" {
+  name_prefix = "${var.project}-node-"
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+  }
+}
+
 resource "aws_eks_node_group" "prod" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "${var.project}-prod-nodes"
@@ -112,6 +122,11 @@ resource "aws_eks_node_group" "prod" {
     desired_size = 1
     min_size     = 1
     max_size     = var.node_max_size
+  }
+
+  launch_template {
+    id      = aws_launch_template.eks_node.id
+    version = aws_launch_template.eks_node.latest_version
   }
 
   labels = { environment = "prod" }

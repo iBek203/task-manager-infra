@@ -97,6 +97,13 @@ jobs:
           TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
         run: terraform plan -no-color
 
+      - name: Import existing OIDC provider if needed
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          OIDC_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
+          terraform import aws_iam_openid_connect_provider.github "$OIDC_ARN" || true
+
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}
         env:

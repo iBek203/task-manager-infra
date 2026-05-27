@@ -132,7 +132,8 @@ jobs:
             --set env[0].value=${{ secrets.AWS_REGION }} \
             --set domainFilters[0]=oybek.xyz \
             --set policy=upsert-only \
-            --set txtOwnerId=task-manager-eks
+            --set txtOwnerId=task-manager-eks \
+            --set txtPrefix=edns-
 
       - name: Create namespaces and db-secrets
         working-directory: ${{ env.WORKING_DIR }}

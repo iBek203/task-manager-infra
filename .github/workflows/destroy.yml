@@ -33,8 +33,10 @@ jobs:
         run: |
           if aws eks describe-cluster --name task-manager-eks --region ${{ secrets.AWS_REGION }} > /dev/null 2>&1; then
             aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name task-manager-eks
-            helm uninstall task-manager -n prod --ignore-not-found || true
-            helm uninstall task-manager -n dev --ignore-not-found || true
+            helm uninstall backend -n prod --ignore-not-found || true
+            helm uninstall frontend -n prod --ignore-not-found || true
+            helm uninstall backend -n dev --ignore-not-found || true
+            helm uninstall frontend -n dev --ignore-not-found || true
             helm uninstall external-dns -n kube-system --ignore-not-found || true
             sleep 60
           else

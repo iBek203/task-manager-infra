@@ -149,6 +149,10 @@ jobs:
             --set region=${{ secrets.AWS_REGION }} \
             --set vpcId=${VPC_ID}
 
+      - name: Wait for AWS Load Balancer Controller to be ready
+        run: |
+          kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=120s
+
       - name: Install external-dns
         run: |
           helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/

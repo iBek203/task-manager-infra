@@ -57,11 +57,13 @@
       "Action": [
         "ssm:PutParameter",
         "ssm:GetParameter",
+        "ssm:GetParameters",
         "ssm:DeleteParameter",
+        "ssm:DescribeParameters",
         "ssm:AddTagsToResource",
         "ssm:ListTagsForResource"
       ],
-      "Resource": "arn:aws:ssm:*:*:parameter/task-manager/*"
+      "Resource": "*"
     },
     {
       "Sid": "IAMForTerraform",

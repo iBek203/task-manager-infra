@@ -59,9 +59,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "SSMRead"
-        Effect = "Allow"
-        Action = "ssm:GetParameter"
+        Sid      = "SSMRead"
+        Effect   = "Allow"
+        Action   = "ssm:GetParameter"
         Resource = "arn:aws:ssm:*:*:parameter/task-manager/*"
       }
     ]

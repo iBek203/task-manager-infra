@@ -172,6 +172,22 @@ jobs:
       - name: Wait for AWS Load Balancer Controller to be ready
         run: kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
 
+      - name: Install Cluster Autoscaler
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          helm repo add autoscaler https://kubernetes.github.io/autoscaler
+          helm repo update
+          CA_ROLE_ARN=$(terraform output -raw ca_role_arn)
+          helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
+            -n kube-system \
+            --set autoDiscovery.clusterName=task-manager-eks \
+            --set awsRegion=${{ secrets.AWS_REGION }} \
+            --set rbac.serviceAccount.create=true \
+            --set rbac.serviceAccount.name=cluster-autoscaler \
+            --set "rbac.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${CA_ROLE_ARN}" \
+            --set extraArgs.balance-similar-node-groups=false \
+            --set extraArgs.skip-nodes-with-system-pods=false
+
       - name: Create namespaces and db-secrets
         working-directory: ${{ env.WORKING_DIR }}
         env:

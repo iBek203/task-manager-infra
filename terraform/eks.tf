@@ -130,6 +130,12 @@ resource "aws_eks_node_group" "prod" {
   }
 
   labels = { environment = "prod" }
+
+  tags = {
+    "k8s.io/cluster-autoscaler/enabled"                        = "true"
+    "k8s.io/cluster-autoscaler/${var.project}-eks" = "owned"
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_node_worker,
     aws_iam_role_policy_attachment.eks_node_cni,

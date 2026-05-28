@@ -18,3 +18,7 @@ output "rds_endpoint" {
   value     = aws_db_instance.main.address
   sensitive = true
 }
+
+output "vpc_id" {
+  value = aws_vpc.main.id
+}

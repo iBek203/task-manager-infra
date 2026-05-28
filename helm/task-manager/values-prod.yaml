@@ -1,5 +1,9 @@
 env: prod
 
+ingress:
+  enabled: true
+  hostname: prod.oybek.xyz
+
 backend:
   replicas: 2
   nodeSelector:
@@ -13,12 +17,9 @@ backend:
       memory: "1Gi"
 
 frontend:
-  hostname: app.oybek.xyz
   replicas: 2
   nodeSelector:
     environment: prod
-  service:
-    type: LoadBalancer
   resources:
     requests:
       cpu: "256m"

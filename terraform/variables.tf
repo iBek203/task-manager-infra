@@ -43,3 +43,8 @@ variable "db_password" {
   type      = string
   sensitive = true
 }
+
+variable "domain_name" {
+  type    = string
+  default = "oybek.xyz"
+}

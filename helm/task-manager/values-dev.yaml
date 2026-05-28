@@ -1,1 +1,5 @@
 env: dev
+
+ingress:
+  enabled: true
+  hostname: dev.oybek.xyz

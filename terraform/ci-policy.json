@@ -26,6 +26,40 @@
       "Resource": "*"
     },
     {
+      "Sid": "ACM",
+      "Effect": "Allow",
+      "Action": [
+        "acm:RequestCertificate",
+        "acm:DescribeCertificate",
+        "acm:DeleteCertificate",
+        "acm:ListCertificates",
+        "acm:ListTagsForCertificate",
+        "acm:AddTagsToCertificate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Route53ForACM",
+      "Effect": "Allow",
+      "Action": [
+        "route53:ChangeResourceRecordSets",
+        "route53:ListHostedZones",
+        "route53:ListResourceRecordSets",
+        "route53:GetChange"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SSM",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:PutParameter",
+        "ssm:GetParameter",
+        "ssm:DeleteParameter"
+      ],
+      "Resource": "arn:aws:ssm:*:*:parameter/task-manager/*"
+    },
+    {
       "Sid": "IAMForTerraform",
       "Effect": "Allow",
       "Action": [
@@ -60,7 +94,8 @@
         "iam:DeleteOpenIDConnectProvider",
         "iam:GetOpenIDConnectProvider",
         "iam:UpdateOpenIDConnectProviderThumbprint",
-        "iam:TagOpenIDConnectProvider"
+        "iam:TagOpenIDConnectProvider",
+        "iam:CreateServiceLinkedRole"
       ],
       "Resource": "*"
     },

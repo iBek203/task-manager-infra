@@ -4,6 +4,11 @@ image:
 env: dev
 dbSecret: db-secret
 
+ingress:
+  enabled: false
+  hostname: ""
+  certificateArn: ""
+
 backend:
   enabled: true
   replicas: 1

@@ -57,6 +57,12 @@ resource "aws_iam_role_policy" "github_actions" {
         Effect   = "Allow"
         Action   = "eks:DescribeCluster"
         Resource = "*"
+      },
+      {
+        Sid    = "SSMRead"
+        Effect = "Allow"
+        Action = "ssm:GetParameter"
+        Resource = "arn:aws:ssm:*:*:parameter/task-manager/*"
       }
     ]
   })

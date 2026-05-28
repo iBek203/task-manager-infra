@@ -121,6 +121,22 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Install AWS Load Balancer Controller
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          helm repo add eks https://aws.github.io/eks-charts
+          helm repo update
+          LBC_ROLE_ARN=$(terraform output -raw lbc_role_arn)
+          VPC_ID=$(terraform output -raw vpc_id)
+          helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+            -n kube-system \
+            --set clusterName=task-manager-eks \
+            --set serviceAccount.create=true \
+            --set serviceAccount.name=aws-load-balancer-controller \
+            --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=${LBC_ROLE_ARN}" \
+            --set region=${{ secrets.AWS_REGION }} \
+            --set vpcId=${VPC_ID}
+
       - name: Install external-dns
         run: |
           helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/

@@ -91,11 +91,11 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
 
-      - name: Terraform Plan
+      - name: Bootstrap ACM certificate
         working-directory: ${{ env.WORKING_DIR }}
         env:
           TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
-        run: terraform plan -no-color
+        run: terraform apply -target=aws_acm_certificate.main -auto-approve
 
       - name: Import existing OIDC provider if needed
         working-directory: ${{ env.WORKING_DIR }}

@@ -104,9 +104,21 @@ jobs:
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           OIDC_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
-          terraform import aws_iam_openid_connect_provider.github "$OIDC_ARN" || true
-          terraform import aws_iam_role.github_actions task-manager-github-actions || true
-          terraform import aws_iam_role_policy.github_actions task-manager-github-actions:github-actions || true
+
+          if ! terraform state list | grep -q "aws_iam_openid_connect_provider.github"; then
+            aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" 2>/dev/null \
+              && terraform import aws_iam_openid_connect_provider.github "$OIDC_ARN" || true
+          fi
+
+          if ! terraform state list | grep -q "aws_iam_role.github_actions"; then
+            aws iam get-role --role-name task-manager-github-actions 2>/dev/null \
+              && terraform import aws_iam_role.github_actions task-manager-github-actions || true
+          fi
+
+          if ! terraform state list | grep -q "aws_iam_role_policy.github_actions"; then
+            aws iam get-role-policy --role-name task-manager-github-actions --policy-name github-actions 2>/dev/null \
+              && terraform import aws_iam_role_policy.github_actions task-manager-github-actions:github-actions || true
+          fi
 
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}

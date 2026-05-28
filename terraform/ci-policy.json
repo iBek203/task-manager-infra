@@ -57,7 +57,9 @@
       "Action": [
         "ssm:PutParameter",
         "ssm:GetParameter",
-        "ssm:DeleteParameter"
+        "ssm:DeleteParameter",
+        "ssm:AddTagsToResource",
+        "ssm:ListTagsForResource"
       ],
       "Resource": "arn:aws:ssm:*:*:parameter/task-manager/*"
     },

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: db-init
+  name: db-init-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install
@@ -16,8 +16,10 @@ spec:
             - /bin/sh
             - -c
             - |
+              DB_NAME="${DATABASE_URL##*/}"
+              DB_NAME="${DB_NAME%%\?*}"
               POSTGRES_URL="${DATABASE_URL%/*}/postgres"
-              psql "$POSTGRES_URL" -c "CREATE DATABASE taskmanager;" || true
+              psql "$POSTGRES_URL" -c "CREATE DATABASE \"${DB_NAME}\";" || true
           env:
             - name: DATABASE_URL
               valueFrom:

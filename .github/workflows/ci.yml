@@ -171,8 +171,10 @@ jobs:
         env:
           TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
         run: |
-          DB_URL="postgresql://taskuser:${{ secrets.TF_DB_PASSWORD }}@$(terraform output -raw rds_endpoint):5432/taskmanager"
+          RDS_HOST=$(terraform output -raw rds_endpoint)
+          declare -A DB_NAMES=([prod]="taskmanager" [dev]="taskmanager_dev")
           for NS in prod dev; do
+            DB_URL="postgresql://taskuser:${{ secrets.TF_DB_PASSWORD }}@${RDS_HOST}:5432/${DB_NAMES[$NS]}"
             kubectl create namespace $NS --dry-run=client -o yaml | kubectl apply -f -
             kubectl create secret generic db-secret -n $NS \
               --from-literal=DATABASE_URL="$DB_URL" \

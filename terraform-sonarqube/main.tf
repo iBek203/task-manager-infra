@@ -1,20 +1,11 @@
-data "terraform_remote_state" "main" {
-  backend = "s3"
-  config = {
-    bucket = "task-manager-tfstate-infra"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
-  }
+data "aws_vpc" "default" {
+  default = true
 }
 
-data "aws_subnets" "public" {
+data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
-    values = [data.terraform_remote_state.main.outputs.vpc_id]
-  }
-  filter {
-    name   = "map-public-ip-on-launch"
-    values = ["true"]
+    values = [data.aws_vpc.default.id]
   }
 }
 

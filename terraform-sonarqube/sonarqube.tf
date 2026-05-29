@@ -33,7 +33,7 @@ resource "aws_iam_instance_profile" "sonarqube" {
 resource "aws_security_group" "sonarqube" {
   name        = "task-manager-sonarqube-sg"
   description = "SonarQube server"
-  vpc_id      = data.terraform_remote_state.main.outputs.vpc_id
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
     description = "SonarQube UI"
@@ -75,7 +75,7 @@ resource "aws_eip_association" "sonarqube" {
 resource "aws_instance" "sonarqube" {
   ami                         = data.aws_ami.amazon_linux.id
   instance_type               = "t3.medium"
-  subnet_id                   = data.aws_subnets.public.ids[0]
+  subnet_id                   = data.aws_subnets.default.ids[0]
   vpc_security_group_ids      = [aws_security_group.sonarqube.id]
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.sonarqube.name

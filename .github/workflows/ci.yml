@@ -188,6 +188,20 @@ jobs:
             --set extraArgs.balance-similar-node-groups=false \
             --set extraArgs.skip-nodes-with-system-pods=false
 
+      - name: Install Fluent Bit (log collection)
+        run: |
+          helm repo add eks https://aws.github.io/eks-charts || true
+          helm repo update
+          helm upgrade --install aws-for-fluent-bit eks/aws-for-fluent-bit \
+            -n kube-system \
+            --set cloudWatch.enabled=true \
+            --set cloudWatch.region=${{ secrets.AWS_REGION }} \
+            --set cloudWatch.logGroupName=/aws/eks/task-manager/app \
+            --set cloudWatch.logStreamPrefix=from-eks/ \
+            --set firehose.enabled=false \
+            --set kinesis.enabled=false \
+            --set elasticsearch.enabled=false
+
       - name: Create namespaces and db-secrets
         working-directory: ${{ env.WORKING_DIR }}
         env:

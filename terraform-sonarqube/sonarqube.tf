@@ -74,7 +74,7 @@ resource "aws_eip_association" "sonarqube" {
 
 resource "aws_instance" "sonarqube" {
   ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = "t3.medium"
+  instance_type               = "t3.large"
   subnet_id                   = aws_subnet.sonarqube.id
   vpc_security_group_ids      = [aws_security_group.sonarqube.id]
   associate_public_ip_address = true
@@ -82,7 +82,6 @@ resource "aws_instance" "sonarqube" {
 
   user_data = <<-EOF
     #!/bin/bash
-    set -e
 
     sysctl -w vm.max_map_count=524288
     sysctl -w fs.file-max=131072
@@ -98,17 +97,27 @@ resource "aws_instance" "sonarqube" {
       --name sonarqube \
       --restart always \
       -p 9000:9000 \
+      -e SONAR_WEB_JAVAOPTS="-Xmx512m -Xms128m" \
+      -e SONAR_CE_JAVAOPTS="-Xmx512m -Xms128m" \
+      -e SONAR_SEARCH_JAVAOPTS="-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m" \
       -v sonarqube_data:/opt/sonarqube/data \
       -v sonarqube_logs:/opt/sonarqube/logs \
       -v sonarqube_extensions:/opt/sonarqube/extensions \
       sonarqube:community
 
     echo "Waiting for SonarQube to start..."
-    for i in $(seq 1 40); do
+    for i in $(seq 1 60); do
       STATUS=$(curl -s http://localhost:9000/api/system/status | jq -r '.status' 2>/dev/null || echo "")
+      echo "Attempt $i: status=$STATUS"
       [ "$STATUS" = "UP" ] && break
       sleep 15
     done
+
+    if [ "$STATUS" != "UP" ]; then
+      echo "SonarQube failed to start after 15 minutes"
+      docker logs sonarqube --tail 50
+      exit 1
+    fi
 
     REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
     SONAR_URL="http://${aws_eip.sonarqube.public_ip}:9000"

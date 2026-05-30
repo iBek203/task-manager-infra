@@ -122,7 +122,7 @@ resource "aws_instance" "sonarqube" {
     REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
     SONAR_URL="http://${aws_eip.sonarqube.public_ip}:9000"
 
-    ADMIN_PASS=$(openssl rand -hex 16)
+    ADMIN_PASS="Sonar@$(openssl rand -hex 12)"
     curl -s -u admin:admin -X POST "$SONAR_URL/api/users/change_password" \
       -d "login=admin&previousPassword=admin&password=$ADMIN_PASS"
 

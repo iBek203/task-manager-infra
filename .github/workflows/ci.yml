@@ -157,7 +157,7 @@ jobs:
             POLICIES=$(aws eks list-associated-access-policies --cluster-name "$EKS_CLUSTER" --principal-arn "$GH_ROLE_ARN" --query 'associatedAccessPolicies[].policyArn' --output text 2>/dev/null || echo "")
             if echo "$POLICIES" | grep -q "AmazonEKSClusterAdminPolicy"; then
               echo "Importing EKS access policy association"
-              terraform import aws_eks_access_policy_association.github_actions "${EKS_CLUSTER},${GH_ROLE_ARN},${ADMIN_POLICY}"
+              terraform import aws_eks_access_policy_association.github_actions "${EKS_CLUSTER}#${GH_ROLE_ARN}#${ADMIN_POLICY}"
             fi
           fi
 

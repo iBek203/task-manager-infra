@@ -49,25 +49,26 @@ jobs:
             --output text)
           echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
 
-      - name: Reboot instance so SSM agent picks up new IAM role
+      - name: Reboot instance and wait for it to be ready
         run: |
           aws ec2 reboot-instances --instance-ids "$INSTANCE_ID"
-          echo "Waiting 90s for instance to come back up..."
-          sleep 90
+          echo "Waiting for instance status checks to pass..."
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+          echo "Instance is up, giving SSM agent 30s to register..."
+          sleep 30
 
       - name: Wait for SSM agent to be ready
         run: |
-          echo "Waiting for SSM agent on $INSTANCE_ID..."
-          for i in $(seq 1 40); do
+          for i in $(seq 1 10); do
             STATUS=$(aws ssm describe-instance-information \
               --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
               --query 'InstanceInformationList[0].PingStatus' \
               --output text 2>/dev/null || echo "None")
             echo "Attempt $i: $STATUS"
             [ "$STATUS" = "Online" ] && break
-            sleep 15
+            sleep 10
           done
-          [ "$STATUS" = "Online" ] || (echo "SSM agent not ready after 10 minutes" && exit 1)
+          [ "$STATUS" = "Online" ] || (echo "SSM agent not ready" && exit 1)
 
       - name: Setup SonarQube via SSM Run Command
         run: |

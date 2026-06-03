@@ -41,9 +41,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "PushImages"
-        Effect = "Allow"
-        Action = [
+        Sid      = "PushImages"
+        Effect   = "Allow"
+        Action   = [
           "ecr:BatchCheckLayerAvailability",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
@@ -59,9 +59,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "SSMAll"
-        Effect = "Allow"
-        Action = [
+        Sid      = "SSMAll"
+        Effect   = "Allow"
+        Action   = [
           "ssm:PutParameter",
           "ssm:GetParameter",
           "ssm:GetParameters",
@@ -73,27 +73,27 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "EC2AndVPC"
-        Effect = "Allow"
-        Action = ["ec2:*"]
+        Sid      = "EC2AndVPC"
+        Effect   = "Allow"
+        Action   = ["ec2:*"]
         Resource = "*"
       },
       {
-        Sid    = "RDS"
-        Effect = "Allow"
-        Action = ["rds:*"]
+        Sid      = "RDS"
+        Effect   = "Allow"
+        Action   = ["rds:*"]
         Resource = "*"
       },
       {
-        Sid    = "ECRManage"
-        Effect = "Allow"
-        Action = ["ecr:*"]
+        Sid      = "ECRManage"
+        Effect   = "Allow"
+        Action   = ["ecr:*"]
         Resource = "*"
       },
       {
-        Sid    = "ACM"
-        Effect = "Allow"
-        Action = [
+        Sid      = "ACM"
+        Effect   = "Allow"
+        Action   = [
           "acm:RequestCertificate",
           "acm:DescribeCertificate",
           "acm:DeleteCertificate",
@@ -104,9 +104,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "Route53"
-        Effect = "Allow"
-        Action = [
+        Sid      = "Route53"
+        Effect   = "Allow"
+        Action   = [
           "route53:ChangeResourceRecordSets",
           "route53:ListHostedZones",
           "route53:ListResourceRecordSets",
@@ -117,9 +117,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "IAMForTerraform"
-        Effect = "Allow"
-        Action = [
+        Sid      = "IAMForTerraform"
+        Effect   = "Allow"
+        Action   = [
           "iam:CreatePolicy",
           "iam:DeletePolicy",
           "iam:GetPolicy",
@@ -168,9 +168,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = [
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = [
           "logs:CreateLogGroup",
           "logs:DeleteLogGroup",
           "logs:DescribeLogGroups",
@@ -183,9 +183,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = "*"
       },
       {
-        Sid    = "S3TerraformState"
-        Effect = "Allow"
-        Action = [
+        Sid      = "S3TerraformState"
+        Effect   = "Allow"
+        Action   = [
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
@@ -200,9 +200,9 @@ resource "aws_iam_role_policy" "github_actions" {
         ]
       },
       {
-        Sid    = "S3Velero"
-        Effect = "Allow"
-        Action = [
+        Sid      = "S3Velero"
+        Effect   = "Allow"
+        Action   = [
           "s3:CreateBucket",
           "s3:DeleteBucket",
           "s3:GetBucketLocation",
@@ -227,9 +227,9 @@ resource "aws_iam_role_policy" "github_actions" {
         ]
       },
       {
-        Sid    = "STSForTerraform"
-        Effect = "Allow"
-        Action = ["sts:GetCallerIdentity"]
+        Sid      = "STSForTerraform"
+        Effect   = "Allow"
+        Action   = ["sts:GetCallerIdentity"]
         Resource = "*"
       }
     ]

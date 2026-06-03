@@ -97,6 +97,41 @@ jobs:
           role-to-assume: arn:aws:iam::981548928508:role/task-manager-github-actions
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Terraform Init (bootstrap)
+        working-directory: terraform/bootstrap
+        run: terraform init
+
+      - name: Import existing OIDC/IAM resources into bootstrap state
+        working-directory: terraform/bootstrap
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          OIDC_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
+
+          if ! terraform state list | grep -qF "aws_iam_openid_connect_provider.github"; then
+            if aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" >/dev/null 2>&1; then
+              echo "Importing GitHub OIDC provider into bootstrap state"
+              terraform import aws_iam_openid_connect_provider.github "$OIDC_ARN"
+            fi
+          fi
+
+          if ! terraform state list | grep -qF "aws_iam_role.github_actions"; then
+            if aws iam get-role --role-name task-manager-github-actions >/dev/null 2>&1; then
+              echo "Importing GitHub Actions role into bootstrap state"
+              terraform import aws_iam_role.github_actions task-manager-github-actions
+            fi
+          fi
+
+          if ! terraform state list | grep -qF "aws_iam_role_policy.github_actions"; then
+            if aws iam get-role-policy --role-name task-manager-github-actions --policy-name github-actions >/dev/null 2>&1; then
+              echo "Importing GitHub Actions role policy into bootstrap state"
+              terraform import aws_iam_role_policy.github_actions task-manager-github-actions:github-actions
+            fi
+          fi
+
+      - name: Terraform Apply (bootstrap)
+        working-directory: terraform/bootstrap
+        run: terraform apply -auto-approve
+
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
@@ -106,54 +141,6 @@ jobs:
         env:
           TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
         run: terraform apply -target=aws_acm_certificate.main -auto-approve
-
-      - name: Import existing OIDC provider if needed
-        working-directory: ${{ env.WORKING_DIR }}
-        env:
-          TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
-        run: |
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          OIDC_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
-
-          if ! terraform state list | grep -qF "aws_iam_openid_connect_provider.github"; then
-            if aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN" >/dev/null 2>&1; then
-              echo "Importing GitHub OIDC provider: $OIDC_ARN"
-              terraform import aws_iam_openid_connect_provider.github "$OIDC_ARN"
-            fi
-          fi
-
-          if ! terraform state list | grep -qF "aws_iam_role.github_actions"; then
-            if aws iam get-role --role-name task-manager-github-actions >/dev/null 2>&1; then
-              echo "Importing GitHub Actions role"
-              terraform import aws_iam_role.github_actions task-manager-github-actions
-            fi
-          fi
-
-          if ! terraform state list | grep -qF "aws_iam_role_policy.github_actions"; then
-            if aws iam get-role-policy --role-name task-manager-github-actions --policy-name github-actions >/dev/null 2>&1; then
-              echo "Importing GitHub Actions role policy"
-              terraform import aws_iam_role_policy.github_actions task-manager-github-actions:github-actions
-            fi
-          fi
-
-      - name: Bootstrap IAM role policy
-        working-directory: ${{ env.WORKING_DIR }}
-        env:
-          TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
-        run: terraform apply -target=aws_iam_role_policy.github_actions -auto-approve
-
-      - name: Wait for IAM policy propagation
-        run: |
-          echo "Waiting for IAM policy changes to propagate..."
-          for i in {1..12}; do
-            RESULT=$(aws s3api get-bucket-policy --bucket task-manager-velero-backups 2>&1 || true)
-            if echo "$RESULT" | grep -qv "AccessDenied"; then
-              echo "Permission confirmed after attempt $i"
-              break
-            fi
-            echo "Attempt $i/12: not yet propagated, retrying in 10s..."
-            sleep 10
-          done
 
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}

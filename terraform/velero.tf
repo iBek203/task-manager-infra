@@ -2,7 +2,7 @@ resource "aws_s3_bucket" "velero" {
   bucket        = "${var.project}-velero-backups"
   force_destroy = true
 
-  depends_on = [aws_iam_user_policy.ci]
+  depends_on = [aws_iam_user_policy.ci_velero_s3]
 }
 
 resource "aws_s3_bucket_versioning" "velero" {

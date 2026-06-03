@@ -2,21 +2,6 @@ data "aws_iam_role" "github_actions" {
   name = "${var.project}-github-actions"
 }
 
-removed {
-  from = aws_iam_openid_connect_provider.github
-  lifecycle { destroy = false }
-}
-
-removed {
-  from = aws_iam_role.github_actions
-  lifecycle { destroy = false }
-}
-
-removed {
-  from = aws_iam_role_policy.github_actions
-  lifecycle { destroy = false }
-}
-
 resource "aws_eks_access_entry" "github_actions" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = data.aws_iam_role.github_actions.arn

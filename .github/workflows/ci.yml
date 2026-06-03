@@ -37,6 +37,12 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: tflint --recursive
 
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm Lint
+        run: helm lint helm/task-manager -f helm/task-manager/values-dev.yaml && helm lint helm/task-manager -f helm/task-manager/values-prod.yaml
+
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
@@ -201,6 +207,30 @@ jobs:
 
       - name: Wait for AWS Load Balancer Controller to be ready
         run: kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
+
+      - name: Install Velero (backup & disaster recovery)
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          helm repo add vmware-tanzu https://vmware-tanzu.github.io/helm-charts
+          helm repo update
+          VELERO_ROLE_ARN=$(terraform output -raw velero_role_arn)
+          VELERO_BUCKET=$(terraform output -raw velero_bucket)
+          kubectl create namespace velero --dry-run=client -o yaml | kubectl apply -f -
+          helm upgrade --install velero vmware-tanzu/velero \
+            -n velero \
+            --set configuration.backupStorageLocation[0].name=default \
+            --set configuration.backupStorageLocation[0].provider=aws \
+            --set configuration.backupStorageLocation[0].bucket=${VELERO_BUCKET} \
+            --set configuration.backupStorageLocation[0].config.region=${{ secrets.AWS_REGION }} \
+            --set configuration.volumeSnapshotLocation[0].name=default \
+            --set configuration.volumeSnapshotLocation[0].provider=aws \
+            --set configuration.volumeSnapshotLocation[0].config.region=${{ secrets.AWS_REGION }} \
+            --set "serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn=${VELERO_ROLE_ARN}" \
+            --set initContainers[0].name=velero-plugin-for-aws \
+            --set initContainers[0].image=velero/velero-plugin-for-aws:v1.10.0 \
+            --set initContainers[0].volumeMounts[0].mountPath=/target \
+            --set initContainers[0].volumeMounts[0].name=plugins \
+            --set credentials.useSecret=false
 
       - name: Create namespaces and db-secrets
         working-directory: ${{ env.WORKING_DIR }}

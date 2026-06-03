@@ -163,6 +163,7 @@ resource "aws_instance" "sonarqube" {
 
   lifecycle {
     prevent_destroy = true
+    ignore_changes  = [user_data]
   }
 
   tags = {

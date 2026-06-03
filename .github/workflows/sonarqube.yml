@@ -52,7 +52,7 @@ jobs:
       - name: Wait for SSM agent to be ready
         run: |
           echo "Waiting for SSM agent on $INSTANCE_ID..."
-          for i in $(seq 1 20); do
+          for i in $(seq 1 40); do
             STATUS=$(aws ssm describe-instance-information \
               --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
               --query 'InstanceInformationList[0].PingStatus' \
@@ -61,7 +61,7 @@ jobs:
             [ "$STATUS" = "Online" ] && break
             sleep 15
           done
-          [ "$STATUS" = "Online" ] || (echo "SSM agent not ready" && exit 1)
+          [ "$STATUS" = "Online" ] || (echo "SSM agent not ready after 10 minutes" && exit 1)
 
       - name: Setup SonarQube via SSM Run Command
         run: |

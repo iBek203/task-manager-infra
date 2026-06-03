@@ -136,6 +136,31 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
 
+      - name: Import existing EKS access resources into main state
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          GH_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/task-manager-github-actions"
+          EKS_CLUSTER="task-manager-eks"
+          ADMIN_POLICY="arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          if ! terraform state list | grep -qF "aws_eks_access_entry.github_actions"; then
+            if aws eks describe-access-entry --cluster-name "$EKS_CLUSTER" --principal-arn "$GH_ROLE_ARN" >/dev/null 2>&1; then
+              echo "Importing EKS access entry"
+              terraform import aws_eks_access_entry.github_actions "${EKS_CLUSTER}:${GH_ROLE_ARN}"
+            fi
+          fi
+
+          if ! terraform state list | grep -qF "aws_eks_access_policy_association.github_actions"; then
+            POLICIES=$(aws eks list-associated-access-policies --cluster-name "$EKS_CLUSTER" --principal-arn "$GH_ROLE_ARN" --query 'associatedAccessPolicies[].policyArn' --output text 2>/dev/null || echo "")
+            if echo "$POLICIES" | grep -q "AmazonEKSClusterAdminPolicy"; then
+              echo "Importing EKS access policy association"
+              terraform import aws_eks_access_policy_association.github_actions "${EKS_CLUSTER},${GH_ROLE_ARN},${ADMIN_POLICY}"
+            fi
+          fi
+
       - name: Bootstrap ACM certificate
         working-directory: ${{ env.WORKING_DIR }}
         env:

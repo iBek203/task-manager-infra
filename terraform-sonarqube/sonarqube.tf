@@ -25,6 +25,11 @@ resource "aws_iam_role_policy" "sonarqube_ssm" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "sonarqube_ssm_core" {
+  role       = aws_iam_role.sonarqube.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_instance_profile" "sonarqube" {
   name = "task-manager-sonarqube"
   role = aws_iam_role.sonarqube.name

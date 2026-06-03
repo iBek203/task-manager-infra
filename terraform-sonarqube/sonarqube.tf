@@ -93,6 +93,9 @@ resource "aws_instance" "sonarqube" {
     systemctl start docker
     systemctl enable docker
 
+    mkdir -p /opt/sonarqube/{data,logs,extensions}
+    chown -R 1000:1000 /opt/sonarqube
+
     docker run -d \
       --name sonarqube \
       --restart always \
@@ -100,9 +103,9 @@ resource "aws_instance" "sonarqube" {
       -e SONAR_WEB_JAVAOPTS="-Xmx512m -Xms128m" \
       -e SONAR_CE_JAVAOPTS="-Xmx512m -Xms128m" \
       -e SONAR_SEARCH_JAVAOPTS="-Xmx512m -Xms512m -XX:MaxDirectMemorySize=256m" \
-      -v sonarqube_data:/opt/sonarqube/data \
-      -v sonarqube_logs:/opt/sonarqube/logs \
-      -v sonarqube_extensions:/opt/sonarqube/extensions \
+      -v /opt/sonarqube/data:/opt/sonarqube/data \
+      -v /opt/sonarqube/logs:/opt/sonarqube/logs \
+      -v /opt/sonarqube/extensions:/opt/sonarqube/extensions \
       sonarqube:community
 
     echo "Waiting for SonarQube to start..."
@@ -160,7 +163,6 @@ resource "aws_instance" "sonarqube" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [user_data]
   }
 
   tags = {

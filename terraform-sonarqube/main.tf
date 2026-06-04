@@ -23,7 +23,7 @@ resource "aws_internet_gateway" "sonarqube" {
 resource "aws_subnet" "sonarqube" {
   vpc_id                  = aws_vpc.sonarqube.id
   cidr_block              = "10.10.0.0/24"
-  availability_zone       = "us-east-1a"
+  availability_zone       = "${var.aws_region}b"
   map_public_ip_on_launch = true
 
   tags = { Name = "task-manager-sonarqube-subnet" }

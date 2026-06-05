@@ -39,30 +39,71 @@ jobs:
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform apply -auto-approve
 
-      - name: Show SonarQube URL
+      - name: Wait for SonarQube to be UP
+        id: wait
         working-directory: ${{ env.WORKING_DIR }}
-        run: terraform output -raw sonarqube_url
-
-      - name: Wait for SonarQube user_data to complete
         run: |
-          echo "Polling SSM until sonarqube-token is populated (up to 20 min)..."
-          for i in $(seq 1 40); do
-            TOKEN=$(aws ssm get-parameter \
-              --name /task-manager/sonarqube-token \
-              --with-decryption \
-              --query Parameter.Value \
-              --output text 2>/dev/null || echo "")
-            if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ]; then
-              echo "SonarQube is ready (attempt $i)"
-              URL=$(aws ssm get-parameter \
-                --name /task-manager/sonarqube-url \
-                --query Parameter.Value \
-                --output text)
-              echo "SonarQube URL: $URL"
+          SONAR_URL=$(terraform output -raw sonarqube_url)
+          echo "sonar_url=$SONAR_URL" >> $GITHUB_OUTPUT
+          echo "Waiting for SonarQube at $SONAR_URL (up to 15 min)..."
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s --max-time 5 "$SONAR_URL/api/system/status" | jq -r '.status' 2>/dev/null || echo "")
+            echo "Attempt $i/60: status=$STATUS"
+            [ "$STATUS" = "UP" ] && exit 0
+            sleep 15
+          done
+          echo "ERROR: SonarQube did not come up in 15 minutes"
+          exit 1
+
+      - name: Configure SonarQube and update SSM
+        run: |
+          SONAR_URL="${{ steps.wait.outputs.sonar_url }}"
+
+          # Skip setup if SSM already has valid credentials for this URL
+          EXISTING_TOKEN=$(aws ssm get-parameter --name /task-manager/sonarqube-token \
+            --with-decryption --query Parameter.Value --output text 2>/dev/null || echo "")
+          SSM_URL=$(aws ssm get-parameter --name /task-manager/sonarqube-url \
+            --query Parameter.Value --output text 2>/dev/null || echo "")
+          if [ -n "$EXISTING_TOKEN" ] && [ "$SSM_URL" = "$SONAR_URL" ]; then
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+              -u "$EXISTING_TOKEN:" "$SONAR_URL/api/authentication/validate")
+            if [ "$HTTP" = "200" ]; then
+              echo "SSM credentials are valid for $SONAR_URL — skipping setup."
               exit 0
             fi
-            echo "Attempt $i/40: SSM not ready yet, retrying in 30s..."
-            sleep 30
+          fi
+
+          echo "Running first-time setup for $SONAR_URL..."
+          ADMIN_PASS="Sonar@$(openssl rand -hex 12)"
+
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u admin:admin -X POST "$SONAR_URL/api/users/change_password" \
+            -d "login=admin&previousPassword=admin&password=$ADMIN_PASS")
+          if [ "$HTTP" != "204" ] && [ "$HTTP" != "200" ]; then
+            echo "ERROR: Password change failed (HTTP $HTTP)"
+            exit 1
+          fi
+          echo "Admin password changed."
+
+          aws ssm put-parameter --name /task-manager/sonarqube-admin-password \
+            --value "$ADMIN_PASS" --type SecureString --overwrite
+
+          for PROJECT in task-manager-backend task-manager-frontend; do
+            curl -s -u "admin:$ADMIN_PASS" -X POST "$SONAR_URL/api/projects/create" \
+              -d "name=$PROJECT&project=$PROJECT"
+            echo "Project $PROJECT created."
           done
-          echo "ERROR: SonarQube setup did not complete within 20 minutes"
-          exit 1
+
+          TOKEN=$(curl -s -u "admin:$ADMIN_PASS" -X POST "$SONAR_URL/api/user_tokens/generate" \
+            -d "name=ci-token&type=GLOBAL_ANALYSIS_TOKEN" | jq -r '.token')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "ERROR: Failed to generate CI token"
+            exit 1
+          fi
+
+          aws ssm put-parameter --name /task-manager/sonarqube-token \
+            --value "$TOKEN" --type SecureString --overwrite
+          aws ssm put-parameter --name /task-manager/sonarqube-url \
+            --value "$SONAR_URL" --type String --overwrite
+
+          echo "Setup complete. SonarQube ready at $SONAR_URL"

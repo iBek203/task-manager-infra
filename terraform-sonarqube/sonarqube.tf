@@ -67,9 +67,9 @@ resource "aws_security_group" "sonarqube" {
 resource "aws_eip" "sonarqube" {
   domain = "vpc"
 
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_eip_association" "sonarqube" {
@@ -94,7 +94,7 @@ resource "aws_instance" "sonarqube" {
     echo "fs.file-max=131072" >> /etc/sysctl.conf
 
     dnf update -y
-    dnf install -y docker jq
+    dnf install -y docker
     systemctl start docker
     systemctl enable docker
 
@@ -112,63 +112,10 @@ resource "aws_instance" "sonarqube" {
       -v /opt/sonarqube/logs:/opt/sonarqube/logs \
       -v /opt/sonarqube/extensions:/opt/sonarqube/extensions \
       sonarqube:community
-
-    echo "Waiting for SonarQube to start (up to 30 min)..."
-    for i in $(seq 1 120); do
-      STATUS=$(curl -s http://localhost:9000/api/system/status | jq -r '.status' 2>/dev/null || echo "")
-      echo "Attempt $i/120: status=$STATUS"
-      [ "$STATUS" = "UP" ] && break
-      sleep 15
-    done
-
-    if [ "$STATUS" != "UP" ]; then
-      echo "SonarQube failed to start after 30 minutes"
-      docker logs sonarqube --tail 100
-      exit 1
-    fi
-
-    REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
-    SONAR_URL="http://${aws_eip.sonarqube.public_ip}:9000"
-
-    ADMIN_PASS="Sonar@$(openssl rand -hex 12)"
-    curl -s -u admin:admin -X POST "$SONAR_URL/api/users/change_password" \
-      -d "login=admin&previousPassword=admin&password=$ADMIN_PASS"
-
-    aws ssm put-parameter \
-      --region "$REGION" \
-      --name "/task-manager/sonarqube-admin-password" \
-      --value "$ADMIN_PASS" \
-      --type "SecureString" \
-      --overwrite
-
-    for PROJECT in task-manager-backend task-manager-frontend; do
-      curl -s -u admin:$ADMIN_PASS -X POST "$SONAR_URL/api/projects/create" \
-        -d "name=$PROJECT&project=$PROJECT"
-    done
-
-    TOKEN=$(curl -s -u admin:$ADMIN_PASS -X POST "$SONAR_URL/api/user_tokens/generate" \
-      -d "name=ci-token&type=GLOBAL_ANALYSIS_TOKEN" | jq -r '.token')
-
-    aws ssm put-parameter \
-      --region "$REGION" \
-      --name "/task-manager/sonarqube-token" \
-      --value "$TOKEN" \
-      --type "SecureString" \
-      --overwrite
-
-    aws ssm put-parameter \
-      --region "$REGION" \
-      --name "/task-manager/sonarqube-url" \
-      --value "$SONAR_URL" \
-      --type "String" \
-      --overwrite
-
-    echo "SonarQube setup complete: $SONAR_URL"
   EOF
 
   lifecycle {
-    # prevent_destroy = true
-    ignore_changes  = [user_data]
+    prevent_destroy = true
   }
 
   tags = {

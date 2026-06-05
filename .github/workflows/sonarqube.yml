@@ -41,6 +41,28 @@ jobs:
 
       - name: Show SonarQube URL
         working-directory: ${{ env.WORKING_DIR }}
+        run: terraform output -raw sonarqube_url
+
+      - name: Wait for SonarQube user_data to complete
         run: |
-          echo "SonarQube URL: $(terraform output -raw sonarqube_url)"
-          echo "Wait ~10 minutes for user_data to finish SonarQube setup"
+          echo "Polling SSM until sonarqube-token is populated (up to 20 min)..."
+          for i in $(seq 1 40); do
+            TOKEN=$(aws ssm get-parameter \
+              --name /task-manager/sonarqube-token \
+              --with-decryption \
+              --query Parameter.Value \
+              --output text 2>/dev/null || echo "")
+            if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ]; then
+              echo "SonarQube is ready (attempt $i)"
+              URL=$(aws ssm get-parameter \
+                --name /task-manager/sonarqube-url \
+                --query Parameter.Value \
+                --output text)
+              echo "SonarQube URL: $URL"
+              exit 0
+            fi
+            echo "Attempt $i/40: SSM not ready yet, retrying in 30s..."
+            sleep 30
+          done
+          echo "ERROR: SonarQube setup did not complete within 20 minutes"
+          exit 1

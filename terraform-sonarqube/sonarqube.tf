@@ -67,9 +67,9 @@ resource "aws_security_group" "sonarqube" {
 resource "aws_eip" "sonarqube" {
   domain = "vpc"
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 resource "aws_eip_association" "sonarqube" {
@@ -113,17 +113,17 @@ resource "aws_instance" "sonarqube" {
       -v /opt/sonarqube/extensions:/opt/sonarqube/extensions \
       sonarqube:community
 
-    echo "Waiting for SonarQube to start..."
-    for i in $(seq 1 60); do
+    echo "Waiting for SonarQube to start (up to 30 min)..."
+    for i in $(seq 1 120); do
       STATUS=$(curl -s http://localhost:9000/api/system/status | jq -r '.status' 2>/dev/null || echo "")
-      echo "Attempt $i: status=$STATUS"
+      echo "Attempt $i/120: status=$STATUS"
       [ "$STATUS" = "UP" ] && break
       sleep 15
     done
 
     if [ "$STATUS" != "UP" ]; then
-      echo "SonarQube failed to start after 15 minutes"
-      docker logs sonarqube --tail 50
+      echo "SonarQube failed to start after 30 minutes"
+      docker logs sonarqube --tail 100
       exit 1
     fi
 
@@ -167,7 +167,7 @@ resource "aws_instance" "sonarqube" {
   EOF
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = true
     ignore_changes  = [user_data]
   }
 

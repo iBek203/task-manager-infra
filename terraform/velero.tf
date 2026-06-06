@@ -94,9 +94,11 @@ resource "aws_iam_role_policy_attachment" "velero" {
 }
 
 output "velero_role_arn" {
-  value = aws_iam_role.velero.arn
+  description = "ARN of the IRSA role used by the Velero server service account."
+  value       = aws_iam_role.velero.arn
 }
 
 output "velero_bucket" {
-  value = aws_s3_bucket.velero.bucket
+  description = "Name of the S3 bucket used by Velero for backup storage."
+  value       = aws_s3_bucket.velero.bucket
 }

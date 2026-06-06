@@ -30,5 +30,6 @@ resource "aws_iam_role_policy_attachment" "ca" {
 }
 
 output "ca_role_arn" {
-  value = aws_iam_role.ca.arn
+  description = "ARN of the IRSA role used by the Cluster Autoscaler service account."
+  value       = aws_iam_role.ca.arn
 }

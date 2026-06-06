@@ -1,24 +1,30 @@
 output "ecr_backend_url" {
-  value = aws_ecr_repository.backend.repository_url
+  description = "ECR repository URL for the backend image."
+  value       = aws_ecr_repository.backend.repository_url
 }
 
 output "ecr_frontend_url" {
-  value = aws_ecr_repository.frontend.repository_url
+  description = "ECR repository URL for the frontend image."
+  value       = aws_ecr_repository.frontend.repository_url
 }
 
 output "eks_cluster_name" {
-  value = aws_eks_cluster.main.name
+  description = "Name of the EKS cluster."
+  value       = aws_eks_cluster.main.name
 }
 
 output "eks_cluster_endpoint" {
-  value = aws_eks_cluster.main.endpoint
+  description = "API server endpoint of the EKS cluster."
+  value       = aws_eks_cluster.main.endpoint
 }
 
 output "rds_endpoint" {
-  value     = aws_db_instance.main.address
-  sensitive = true
+  description = "Hostname of the RDS PostgreSQL instance (sensitive)."
+  value       = aws_db_instance.main.address
+  sensitive   = true
 }
 
 output "vpc_id" {
-  value = aws_vpc.main.id
+  description = "ID of the VPC."
+  value       = aws_vpc.main.id
 }

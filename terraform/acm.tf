@@ -49,5 +49,6 @@ resource "aws_ssm_parameter" "acm_cert_arn" {
 }
 
 output "acm_certificate_arn" {
-  value = aws_acm_certificate.main.arn
+  description = "ARN of the ACM wildcard certificate used by the ALB Ingress."
+  value       = aws_acm_certificate.main.arn
 }

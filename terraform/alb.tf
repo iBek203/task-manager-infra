@@ -44,9 +44,11 @@ resource "aws_iam_role_policy_attachment" "lbc" {
 }
 
 output "lbc_role_arn" {
-  value = aws_iam_role.lbc.arn
+  description = "ARN of the IRSA role used by the AWS Load Balancer Controller service account."
+  value       = aws_iam_role.lbc.arn
 }
 
 output "eks_oidc_provider_arn" {
-  value = aws_iam_openid_connect_provider.eks.arn
+  description = "ARN of the EKS OIDC provider used for IRSA role trust policies."
+  value       = aws_iam_openid_connect_provider.eks.arn
 }

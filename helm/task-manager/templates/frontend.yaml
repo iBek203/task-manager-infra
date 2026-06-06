@@ -41,6 +41,18 @@ spec:
               value: backend
             - name: BACKEND_PORT
               value: "8000"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 30
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
 ---

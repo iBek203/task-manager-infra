@@ -150,6 +150,17 @@
       "Resource": "*"
     },
     {
+      "Sid": "CloudWatchDashboards",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutDashboard",
+        "cloudwatch:GetDashboard",
+        "cloudwatch:DeleteDashboards",
+        "cloudwatch:ListDashboards"
+      ],
+      "Resource": "*"
+    },
+    {
       "Sid": "S3TerraformState",
       "Effect": "Allow",
       "Action": [

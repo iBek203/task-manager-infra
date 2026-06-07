@@ -141,7 +141,7 @@ resource "aws_eks_node_group" "prod" {
   labels = { environment = "prod" }
 
   tags = {
-    "k8s.io/cluster-autoscaler/enabled"                       = "true"
+    "k8s.io/cluster-autoscaler/enabled"            = "true"
     "k8s.io/cluster-autoscaler/${var.project}-eks" = "owned"
   }
 

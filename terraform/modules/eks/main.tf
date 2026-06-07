@@ -181,3 +181,11 @@ resource "aws_iam_openid_connect_provider" "main" {
 locals {
   oidc_issuer = replace(aws_iam_openid_connect_provider.main.url, "https://", "")
 }
+
+resource "aws_eks_addon" "cloudwatch_observability" {
+  cluster_name             = aws_eks_cluster.main.name
+  addon_name               = "amazon-cloudwatch-observability"
+  service_account_role_arn = aws_iam_role.node.arn
+
+  depends_on = [aws_eks_node_group.prod]
+}

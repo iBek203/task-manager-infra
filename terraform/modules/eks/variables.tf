@@ -3,11 +3,6 @@ variable "project" {
   description = "Project name prefix for resource naming and tagging."
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "ID of the VPC where the EKS cluster is deployed."
-}
-
 variable "private_subnet_ids" {
   type        = list(string)
   description = "IDs of private subnets for EKS worker nodes, Fargate pods, and the cluster API endpoint."

@@ -37,13 +37,13 @@ resource "aws_iam_role" "velero" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = aws_iam_openid_connect_provider.eks.arn
+        Federated = module.eks.oidc_provider_arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${local.oidc_issuer}:sub" = "system:serviceaccount:velero:velero-server"
-          "${local.oidc_issuer}:aud" = "sts.amazonaws.com"
+          "${module.eks.oidc_issuer}:sub" = "system:serviceaccount:velero:velero-server"
+          "${module.eks.oidc_issuer}:aud" = "sts.amazonaws.com"
         }
       }
     }]

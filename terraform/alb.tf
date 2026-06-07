@@ -1,17 +1,3 @@
-data "tls_certificate" "eks" {
-  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
-}
-
-resource "aws_iam_openid_connect_provider" "eks" {
-  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
-}
-
-locals {
-  oidc_issuer = replace(aws_iam_openid_connect_provider.eks.url, "https://", "")
-}
-
 resource "aws_iam_role" "lbc" {
   name = "${var.project}-lbc"
 
@@ -20,13 +6,13 @@ resource "aws_iam_role" "lbc" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = aws_iam_openid_connect_provider.eks.arn
+        Federated = module.eks.oidc_provider_arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${local.oidc_issuer}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
-          "${local.oidc_issuer}:aud" = "sts.amazonaws.com"
+          "${module.eks.oidc_issuer}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+          "${module.eks.oidc_issuer}:aud" = "sts.amazonaws.com"
         }
       }
     }]
@@ -50,5 +36,5 @@ output "lbc_role_arn" {
 
 output "eks_oidc_provider_arn" {
   description = "ARN of the EKS OIDC provider used for IRSA role trust policies."
-  value       = aws_iam_openid_connect_provider.eks.arn
+  value       = module.eks.oidc_provider_arn
 }

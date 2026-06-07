@@ -1,7 +1,7 @@
 resource "aws_security_group" "rds" {
   name        = "${var.project}-rds-sg"
   description = "PostgreSQL access for RDS"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "rds_postgres" {
@@ -22,7 +22,7 @@ resource "aws_vpc_security_group_egress_rule" "rds_all" {
 
 resource "aws_db_subnet_group" "main" {
   name       = "${var.project}-rds"
-  subnet_ids = aws_subnet.private[*].id
+  subnet_ids = var.private_subnet_ids
 }
 
 resource "aws_db_instance" "main" {

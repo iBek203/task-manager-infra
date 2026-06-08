@@ -173,6 +173,12 @@ TRUSTEOF
                     credentialsId: 'aws-credentials'
                 ]]) {
                     sh '''
+                        # Skip if cluster no longer exists (e.g. re-running after partial destroy)
+                        aws eks describe-cluster --name task-manager-eks --region ${AWS_REGION} > /dev/null 2>&1 || {
+                            echo "Cluster not found, skipping Helm cleanup"
+                            exit 0
+                        }
+
                         aws eks update-kubeconfig --region ${AWS_REGION} --name task-manager-eks
 
                         # Uninstall app helm releases so the ALB controller deletes the ALB

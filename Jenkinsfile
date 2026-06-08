@@ -46,10 +46,10 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-credentials'
-                ]]) {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials'],
+                    string(credentialsId: 'tf-db-password', variable: 'TF_VAR_db_password')
+                ]) {
                     sh 'terraform -chdir=${TF_DIR} plan -var-file=terraform.tfvars -out=tfplan'
                 }
             }
@@ -67,10 +67,10 @@ pipeline {
         stage('Terraform Apply') {
             when { expression { params.ACTION == 'apply' } }
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-credentials'
-                ]]) {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials'],
+                    string(credentialsId: 'tf-db-password', variable: 'TF_VAR_db_password')
+                ]) {
                     sh 'terraform -chdir=${TF_DIR} apply tfplan'
                 }
             }
@@ -79,10 +79,10 @@ pipeline {
         stage('Terraform Destroy') {
             when { expression { params.ACTION == 'destroy' } }
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-credentials'
-                ]]) {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials'],
+                    string(credentialsId: 'tf-db-password', variable: 'TF_VAR_db_password')
+                ]) {
                     sh 'terraform -chdir=${TF_DIR} destroy -var-file=terraform.tfvars -auto-approve'
                 }
             }

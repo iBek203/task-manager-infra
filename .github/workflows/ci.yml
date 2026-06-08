@@ -1,10 +1,8 @@
 name: Infra CI
 
+# Disabled: using Jenkins for CI/CD testing. Re-enable by restoring push/pull_request triggers.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 env:
   TF_VERSION: "1.10.5"

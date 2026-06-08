@@ -76,6 +76,33 @@ pipeline {
             }
         }
 
+        stage('Create K8s Secrets') {
+            when { expression { params.ACTION == 'apply' } }
+            steps {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials'],
+                    string(credentialsId: 'tf-db-password', variable: 'TF_VAR_db_password')
+                ]) {
+                    sh '''
+                        aws eks update-kubeconfig --region ${AWS_REGION} --name task-manager-eks
+                        RDS_HOST=$(terraform -chdir=${TF_DIR} output -raw rds_endpoint)
+                        for NS in dev prod; do
+                            if [ "$NS" = "prod" ]; then
+                                DB_NAME="taskmanager"
+                            else
+                                DB_NAME="taskmanager_dev"
+                            fi
+                            DB_URL="postgresql://taskuser:${TF_VAR_db_password}@${RDS_HOST}:5432/${DB_NAME}"
+                            kubectl create namespace ${NS} --dry-run=client -o yaml | kubectl apply -f -
+                            kubectl create secret generic db-secret -n ${NS} \
+                                --from-literal=DATABASE_URL="${DB_URL}" \
+                                --dry-run=client -o yaml | kubectl apply -f -
+                        done
+                    '''
+                }
+            }
+        }
+
         stage('Terraform Destroy') {
             when { expression { params.ACTION == 'destroy' } }
             steps {

@@ -165,6 +165,41 @@ TRUSTEOF
             }
         }
 
+        stage('Pre-Destroy Cleanup') {
+            when { expression { params.ACTION == 'destroy' } }
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh '''
+                        aws eks update-kubeconfig --region ${AWS_REGION} --name task-manager-eks
+
+                        # Uninstall app helm releases so the ALB controller deletes the ALB
+                        for NS in dev prod; do
+                            for RELEASE in frontend backend; do
+                                helm uninstall ${RELEASE} -n ${NS} 2>/dev/null || true
+                            done
+                        done
+
+                        # Wait for ALBs to be fully deleted before Terraform touches the VPC
+                        echo "Waiting for load balancers to be deleted..."
+                        for i in $(seq 1 36); do
+                            COUNT=$(aws elbv2 describe-load-balancers --region ${AWS_REGION} \
+                                --query "length(LoadBalancers[?contains(LoadBalancerName,'k8s')])" \
+                                --output text 2>/dev/null || echo "0")
+                            if [ "${COUNT}" = "0" ]; then
+                                echo "All load balancers deleted"
+                                break
+                            fi
+                            echo "Waiting... ${COUNT} LB(s) still active"
+                            sleep 10
+                        done
+                    '''
+                }
+            }
+        }
+
         stage('Terraform Destroy') {
             when { expression { params.ACTION == 'destroy' } }
             steps {

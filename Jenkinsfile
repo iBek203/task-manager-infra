@@ -76,6 +76,68 @@ pipeline {
             }
         }
 
+        stage('Install Cluster Add-ons') {
+            when { expression { params.ACTION == 'apply' } }
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials'
+                ]]) {
+                    sh '''
+                        aws eks update-kubeconfig --region ${AWS_REGION} --name task-manager-eks
+
+                        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                        LBC_ROLE_ARN=$(terraform -chdir=${TF_DIR} output -raw lbc_role_arn)
+                        OIDC_PROVIDER_ARN=$(terraform -chdir=${TF_DIR} output -raw eks_oidc_provider_arn)
+                        OIDC_ID=$(echo $OIDC_PROVIDER_ARN | cut -d'/' -f4)
+
+                        # Update ExternalDNSRole trust policy with the new cluster OIDC ID
+                        cat > /tmp/external-dns-trust.json << TRUSTEOF
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/oidc.eks.${AWS_REGION}.amazonaws.com/id/${OIDC_ID}"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {
+        "oidc.eks.${AWS_REGION}.amazonaws.com/id/${OIDC_ID}:sub": "system:serviceaccount:kube-system:external-dns",
+        "oidc.eks.${AWS_REGION}.amazonaws.com/id/${OIDC_ID}:aud": "sts.amazonaws.com"
+      }
+    }
+  }]
+}
+TRUSTEOF
+                        aws iam update-assume-role-policy \
+                            --role-name ExternalDNSRole \
+                            --policy-document file:///tmp/external-dns-trust.json
+
+                        helm repo add eks https://aws.github.io/eks-charts
+                        helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+                        helm repo update
+
+                        helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+                            -n kube-system \
+                            --set clusterName=task-manager-eks \
+                            --set "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=${LBC_ROLE_ARN}" \
+                            --wait --timeout 5m
+
+                        helm upgrade --install external-dns external-dns/external-dns \
+                            -n kube-system \
+                            --set provider=aws \
+                            --set aws.region=${AWS_REGION} \
+                            --set txtOwnerId=task-manager-eks \
+                            --set policy=upsert-only \
+                            --set serviceAccount.name=external-dns \
+                            --set "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=arn:aws:iam::${ACCOUNT_ID}:role/ExternalDNSRole" \
+                            --wait --timeout 3m
+                    '''
+                }
+            }
+        }
+
         stage('Create K8s Secrets') {
             when { expression { params.ACTION == 'apply' } }
             steps {

@@ -45,9 +45,11 @@ jobs:
         run: |
           SONAR_URL=$(terraform output -raw sonarqube_url)
           echo "sonar_url=$SONAR_URL" >> $GITHUB_OUTPUT
-          echo "Waiting for SonarQube at $SONAR_URL (up to 15 min)..."
+          echo "Waiting 3 min for EC2 to finish booting and Docker to install..."
+          sleep 180
+          echo "Polling SonarQube at $SONAR_URL (up to 15 min)..."
           for i in $(seq 1 60); do
-            STATUS=$(curl -s --max-time 5 "$SONAR_URL/api/system/status" | jq -r '.status' 2>/dev/null || echo "")
+            STATUS=$(curl -s --max-time 10 "$SONAR_URL/api/system/status" | jq -r '.status // empty' 2>/dev/null || echo "")
             echo "Attempt $i/60: status=$STATUS"
             [ "$STATUS" = "UP" ] && exit 0
             sleep 15

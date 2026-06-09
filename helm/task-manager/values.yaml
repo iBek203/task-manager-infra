@@ -1,5 +1,5 @@
 image:
-  registry: 981548928508.dkr.ecr.us-east-1.amazonaws.com
+  registry: ""
 
 env: dev
 dbSecret: db-secret

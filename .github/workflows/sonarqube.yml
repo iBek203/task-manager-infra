@@ -37,7 +37,7 @@ jobs:
 
       - name: Terraform Apply
         working-directory: ${{ env.WORKING_DIR }}
-        run: terraform apply -auto-approve
+        run: terraform apply -replace=aws_instance.sonarqube -auto-approve
 
       - name: Wait for SonarQube to be UP
         id: wait

@@ -84,9 +84,11 @@ resource "aws_instance" "sonarqube" {
   vpc_security_group_ids      = [aws_security_group.sonarqube.id]
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.sonarqube.name
+  user_data_replace_on_change = true
 
   user_data = <<-EOF
     #!/bin/bash
+    set -eux
 
     sysctl -w vm.max_map_count=524288
     sysctl -w fs.file-max=131072
@@ -113,10 +115,6 @@ resource "aws_instance" "sonarqube" {
       -v /opt/sonarqube/extensions:/opt/sonarqube/extensions \
       sonarqube:community
   EOF
-
-  lifecycle {
-    prevent_destroy = true
-  }
 
   tags = {
     Name = "task-manager-sonarqube"

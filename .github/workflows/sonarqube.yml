@@ -57,6 +57,16 @@ jobs:
           echo "ERROR: SonarQube did not come up in 15 minutes"
           exit 1
 
+      - name: Dump EC2 console output on failure
+        if: failure()
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=task-manager-sonarqube" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" --output text)
+          echo "EC2 Instance: $INSTANCE_ID"
+          aws ec2 get-console-output --instance-id "$INSTANCE_ID" --output text || true
+
       - name: Configure SonarQube and update SSM
         run: |
           SONAR_URL="${{ steps.wait.outputs.sonar_url }}"

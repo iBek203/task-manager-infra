@@ -205,6 +205,7 @@ jobs:
             --set provider=aws \
             --set aws.region=${{ secrets.AWS_REGION }} \
             --set txtOwnerId=task-manager-eks \
+            --set txtPrefix=edns- \
             --set policy=upsert-only \
             --set serviceAccount.name=external-dns \
             --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::${ACCOUNT_ID}:role/ExternalDNSRole" \

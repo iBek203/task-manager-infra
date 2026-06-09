@@ -332,24 +332,25 @@ jobs:
           }
           aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name task-manager-eks
 
-          for NS in dev prod; do
-            for RELEASE in frontend backend; do
-              helm uninstall ${RELEASE} -n ${NS} 2>/dev/null || true
-            done
-          done
+          kubectl delete namespace dev prod --ignore-not-found
 
           echo "Waiting for load balancers to be deleted..."
           for i in $(seq 1 36); do
-            COUNT=$(aws elbv2 describe-load-balancers --region ${{ secrets.AWS_REGION }} \
+            COUNT=$(aws elbv2 describe-load-balancers \
+              --region ${{ secrets.AWS_REGION }} \
               --query "length(LoadBalancers[?contains(LoadBalancerName,'k8s')])" \
               --output text 2>/dev/null || echo "0")
-            if [ "${COUNT}" = "0" ]; then
+
+            if [ "$COUNT" = "0" ]; then
               echo "All load balancers deleted"
               break
             fi
             echo "Waiting... ${COUNT} LB(s) still active"
             sleep 10
           done
+
+          # Give AWS 30s to release ENIs after ALB deletion before Terraform destroys the subnets.
+          sleep 30
 
       - name: Terraform Destroy
         working-directory: ${{ env.WORKING_DIR }}

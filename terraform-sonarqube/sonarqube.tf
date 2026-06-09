@@ -86,6 +86,11 @@ resource "aws_instance" "sonarqube" {
   iam_instance_profile        = aws_iam_instance_profile.sonarqube.name
   user_data_replace_on_change = true
 
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
+
   user_data = <<-EOF
     #!/bin/bash
     set -eux

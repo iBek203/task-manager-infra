@@ -1,6 +1,5 @@
 resource "aws_s3_bucket" "velero" {
-  bucket        = "${var.project}-velero-backups"
-  force_destroy = true
+  bucket = "${var.project}-velero-backups"
 }
 
 resource "aws_s3_bucket_versioning" "velero" {
@@ -81,7 +80,7 @@ resource "aws_iam_policy" "velero" {
       },
       {
         Effect   = "Allow"
-        Action   = ["s3:ListBucket"]
+        Action   = ["s3:ListBucket", "s3:GetBucketLocation"]
         Resource = [aws_s3_bucket.velero.arn]
       }
     ]

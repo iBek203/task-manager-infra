@@ -1,5 +1,13 @@
 env: dev
 
+dbSecret: task-manager-db-secret
+
 ingress:
   enabled: true
   hostname: dev.oybek.xyz
+
+backend:
+  enabled: true
+
+frontend:
+  enabled: true

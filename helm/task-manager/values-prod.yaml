@@ -1,10 +1,14 @@
 env: prod
 
+dbSecret: task-manager-db-secret
+
 ingress:
   enabled: true
   hostname: prod.oybek.xyz
+  certificateArn: ""   # set via --set ingress.certificateArn=<acm_certificate_arn output> at deploy time
 
 backend:
+  enabled: true
   replicas: 2
   nodeSelector:
     environment: prod
@@ -17,6 +21,7 @@ backend:
       memory: "1Gi"
 
 frontend:
+  enabled: true
   replicas: 2
   nodeSelector:
     environment: prod

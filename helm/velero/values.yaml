@@ -1,0 +1,36 @@
+credentials:
+  useSecret: false
+
+serviceAccount:
+  server:
+    annotations:
+      eks.amazonaws.com/role-arn: ""  # set via --set at deploy time
+
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: ""  # set via --set at deploy time
+      config:
+        region: us-east-1
+
+  volumeSnapshotLocation:
+    - name: default
+      provider: aws
+      config:
+        region: us-east-1
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.10.0
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+schedules:
+  daily-backup:
+    schedule: "0 2 * * *"
+    template:
+      ttl: "720h"
+      includedNamespaces:
+        - prod

@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "velero" {
-  bucket = "${var.project}-velero-backups"
+  bucket        = "${var.project}-velero-backups"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "velero" {

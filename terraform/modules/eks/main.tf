@@ -49,30 +49,6 @@ resource "aws_iam_role_policy_attachment" "node_cloudwatch" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-resource "aws_iam_policy" "external_dns" {
-  name = "${var.project}-external-dns"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["route53:ChangeResourceRecordSets"]
-        Resource = ["arn:aws:route53:::hostedzone/*"]
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["route53:ListHostedZones", "route53:ListResourceRecordSets"]
-        Resource = ["*"]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "node_external_dns" {
-  role       = aws_iam_role.node.name
-  policy_arn = aws_iam_policy.external_dns.arn
-}
 
 resource "aws_iam_role" "fargate" {
   name = "${var.project}-eks-fargate-role"
@@ -92,6 +68,26 @@ resource "aws_iam_role_policy_attachment" "fargate" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy" "fargate_cloudwatch" {
+  name = "fargate-cloudwatch-logs"
+  role = aws_iam_role.fargate.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:PutLogEvents"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_launch_template" "node" {
   name_prefix = "${var.project}-node-"
 
@@ -105,6 +101,8 @@ resource "aws_launch_template" "node" {
 resource "aws_eks_cluster" "main" {
   name     = "${var.project}-eks"
   role_arn = aws_iam_role.cluster.arn
+
+  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   access_config {
     authentication_mode                         = "API_AND_CONFIG_MAP"

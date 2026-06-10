@@ -61,6 +61,7 @@ jobs:
 
           # Remove system components
           helm uninstall aws-for-fluent-bit -n kube-system --ignore-not-found || true
+          helm uninstall metrics-server -n kube-system --ignore-not-found || true
           helm uninstall cluster-autoscaler -n kube-system --ignore-not-found || true
           helm uninstall aws-load-balancer-controller -n kube-system --ignore-not-found || true
           helm uninstall external-dns -n kube-system --ignore-not-found || true
@@ -78,8 +79,6 @@ jobs:
           terraform state rm aws_iam_openid_connect_provider.github || true
           terraform state rm aws_iam_role.github_actions || true
           terraform state rm aws_iam_role_policy.github_actions || true
-          terraform state rm aws_eks_access_entry.github_actions || true
-          terraform state rm aws_eks_access_policy_association.github_actions || true
 
           terraform state rm aws_acm_certificate_validation.main || true
           terraform state rm aws_ssm_parameter.acm_cert_arn || true

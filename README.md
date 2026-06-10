@@ -42,7 +42,7 @@ Both environments share one RDS instance and one EKS cluster, separated by Kuber
 
 - AWS CLI configured
 - `terraform`, `kubectl`, `helm` installed
-- S3 bucket `task-manager-tf-state` already exists (created once manually)
+- S3 bucket `task-manager-tfstate-infra` already exists (created once manually)
 
 ## Manual deploy
 

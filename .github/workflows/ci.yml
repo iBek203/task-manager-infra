@@ -211,8 +211,9 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           helm upgrade --install external-dns external-dns/external-dns \
             -n kube-system \
-            --set provider=aws \
-            --set aws.region=${{ secrets.AWS_REGION }} \
+            --set provider.name=aws \
+            --set env[0].name=AWS_REGION \
+            --set env[0].value=${{ secrets.AWS_REGION }} \
             --set txtOwnerId=task-manager-eks \
             --set txtPrefix=edns- \
             --set policy=upsert-only \

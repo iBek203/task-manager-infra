@@ -277,6 +277,7 @@ jobs:
           kubectl create namespace velero --dry-run=client -o yaml | kubectl apply -f -
           helm upgrade --install velero vmware-tanzu/velero \
             -n velero \
+            -f ../helm/velero/values.yaml \
             --set configuration.backupStorageLocation[0].name=default \
             --set configuration.backupStorageLocation[0].provider=aws \
             --set configuration.backupStorageLocation[0].bucket=${VELERO_BUCKET} \

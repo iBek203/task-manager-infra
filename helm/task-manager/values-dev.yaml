@@ -1,6 +1,6 @@
 env: dev
 
-dbSecret: task-manager-db-secret
+dbSecret: db-secret
 
 ingress:
   enabled: true

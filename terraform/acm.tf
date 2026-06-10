@@ -42,9 +42,10 @@ resource "aws_acm_certificate_validation" "main" {
 }
 
 resource "aws_ssm_parameter" "acm_cert_arn" {
-  name  = "/${var.project}/acm-certificate-arn"
-  type  = "String"
-  value = aws_acm_certificate.main.arn
+  name      = "/${var.project}/acm-certificate-arn"
+  type      = "String"
+  value     = aws_acm_certificate.main.arn
+  overwrite = true
 
   depends_on = [aws_acm_certificate_validation.main]
 }

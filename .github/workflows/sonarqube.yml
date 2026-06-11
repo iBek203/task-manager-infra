@@ -2,6 +2,15 @@ name: SonarQube Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        required: true
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - destroy
   push:
     branches: [main]
     paths:
@@ -15,6 +24,7 @@ jobs:
   deploy:
     name: Deploy SonarQube
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.action == 'deploy'
     permissions:
       id-token: write
       contents: read
@@ -121,3 +131,48 @@ jobs:
             --value "$SONAR_URL" --type String --overwrite
 
           echo "Setup complete. SonarQube ready at $SONAR_URL"
+
+  destroy:
+    name: Destroy SonarQube
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'destroy'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::981548928508:role/task-manager-github-actions
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform init
+
+      - name: Remove prevent_destroy from EIP
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          sed -i '/prevent_destroy/d' sonarqube.tf
+          sed -i '/lifecycle {/,/}/{ /^[[:space:]]*}[[:space:]]*$/{ /lifecycle/!d }; /lifecycle {/d }' sonarqube.tf
+
+      - name: Terraform Destroy
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform destroy -auto-approve
+
+      - name: Delete SSM parameters
+        run: |
+          for PARAM in \
+            /task-manager/sonarqube-token \
+            /task-manager/sonarqube-url \
+            /task-manager/sonarqube-admin-password; do
+            aws ssm delete-parameter --name "$PARAM" 2>/dev/null && echo "Deleted $PARAM" || echo "Not found: $PARAM"
+          done

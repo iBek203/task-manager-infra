@@ -67,6 +67,19 @@ jobs:
           helm uninstall external-dns -n kube-system --ignore-not-found || true
           helm uninstall velero -n velero --ignore-not-found || true
 
+      - name: Terraform Init
+        working-directory: ${{ env.WORKING_DIR }}
+        run: terraform init
+
+      - name: Drain EKS node group
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
+        run: |
+          terraform destroy \
+            -target=module.eks.aws_eks_node_group.prod \
+            -auto-approve
+
       - name: Delete orphaned VPC CNI ENIs
         run: |
           VPC_ID=$(aws ec2 describe-vpcs \
@@ -92,10 +105,6 @@ jobs:
             aws ec2 delete-network-interface --network-interface-id "$ENI"
           done
           echo "Done"
-
-      - name: Terraform Init
-        working-directory: ${{ env.WORKING_DIR }}
-        run: terraform init
 
       - name: Terraform Destroy
         working-directory: ${{ env.WORKING_DIR }}

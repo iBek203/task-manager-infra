@@ -17,7 +17,7 @@
         "ecr:CompleteLayerUpload",
         "ecr:PutImage"
       ],
-      "Resource": "arn:aws:ecr:*:981548928508:repository/task-manager-*"
+      "Resource": "arn:aws:ecr:*:*:repository/task-manager-*"
     },
     {
       "Sid": "EKSAll",

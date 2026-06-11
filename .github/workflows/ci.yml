@@ -87,7 +87,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::981548928508:role/task-manager-github-actions
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
@@ -121,7 +121,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::981548928508:role/task-manager-github-actions
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init (bootstrap)
@@ -159,6 +159,36 @@ jobs:
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
+
+      - name: Import existing resources into state
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+
+          import_if_missing() {
+            local addr=$1 id=$2
+            if ! terraform state list | grep -qF "$addr"; then
+              terraform import "$addr" "$id" && echo "Imported $addr" || echo "Skipped $addr (not found in AWS)"
+            fi
+          }
+
+          # IAM policies
+          import_if_missing aws_iam_policy.lbc          "arn:aws:iam::${ACCOUNT_ID}:policy/task-manager-lbc"
+          import_if_missing aws_iam_policy.ca           "arn:aws:iam::${ACCOUNT_ID}:policy/task-manager-ca"
+          import_if_missing aws_iam_policy.external_dns "arn:aws:iam::${ACCOUNT_ID}:policy/task-manager-external-dns"
+          import_if_missing aws_iam_policy.velero        "arn:aws:iam::${ACCOUNT_ID}:policy/task-manager-velero"
+
+          # IAM roles (EKS)
+          import_if_missing module.eks.aws_iam_role.cluster "task-manager-eks-cluster-role"
+          import_if_missing module.eks.aws_iam_role.node    "task-manager-eks-node-role"
+          import_if_missing module.eks.aws_iam_role.fargate "task-manager-eks-fargate-role"
+
+          # ECR repositories
+          import_if_missing module.ecr.aws_ecr_repository.backend  "task-manager-backend"
+          import_if_missing module.ecr.aws_ecr_repository.frontend "task-manager-frontend"
+
+          # CloudWatch log group
+          import_if_missing aws_cloudwatch_log_group.app "/aws/eks/task-manager/app"
 
       - name: Bootstrap ACM certificate
         working-directory: ${{ env.WORKING_DIR }}

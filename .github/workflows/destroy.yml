@@ -80,29 +80,46 @@ jobs:
             -target=module.eks.aws_eks_node_group.prod \
             -auto-approve
 
-      - name: Delete orphaned VPC CNI ENIs
+      - name: Delete orphaned VPC resources (ENIs + LBC security groups)
         run: |
           VPC_ID=$(aws ec2 describe-vpcs \
             --filters "Name=tag:Name,Values=task-manager-vpc" \
             --query 'Vpcs[0].VpcId' --output text 2>/dev/null || echo "")
           if [ -z "$VPC_ID" ] || [ "$VPC_ID" = "None" ]; then
-            echo "VPC not found, skipping ENI cleanup"
+            echo "VPC not found, skipping cleanup"
             exit 0
           fi
-          echo "Scanning VPC $VPC_ID for orphaned ENIs..."
+          echo "VPC: $VPC_ID"
+
+          echo "--- Deleting orphaned ENIs ---"
           ENI_IDS=$(aws ec2 describe-network-interfaces \
             --filters \
               "Name=vpc-id,Values=${VPC_ID}" \
               "Name=status,Values=available" \
             --query 'NetworkInterfaces[*].NetworkInterfaceId' \
             --output text)
-          if [ -z "$ENI_IDS" ]; then
-            echo "No orphaned ENIs found"
-            exit 0
-          fi
           for ENI in $ENI_IDS; do
-            echo "Deleting ENI $ENI..."
-            aws ec2 delete-network-interface --network-interface-id "$ENI"
+            echo "Deleting ENI $ENI"
+            aws ec2 delete-network-interface --network-interface-id "$ENI" || true
+          done
+
+          echo "--- Deleting LBC-managed security groups ---"
+          SG_IDS=$(aws ec2 describe-security-groups \
+            --filters \
+              "Name=vpc-id,Values=${VPC_ID}" \
+              "Name=tag-key,Values=elbv2.k8s.aws/cluster" \
+            --query 'SecurityGroups[*].GroupId' \
+            --output text)
+          # also catch SGs named k8s-* not yet tagged
+          SG_IDS_K8S=$(aws ec2 describe-security-groups \
+            --filters \
+              "Name=vpc-id,Values=${VPC_ID}" \
+              "Name=group-name,Values=k8s-*" \
+            --query 'SecurityGroups[*].GroupId' \
+            --output text)
+          for SG in $SG_IDS $SG_IDS_K8S; do
+            echo "Deleting SG $SG"
+            aws ec2 delete-security-group --group-id "$SG" || true
           done
           echo "Done"
 

@@ -67,6 +67,32 @@ jobs:
           helm uninstall external-dns -n kube-system --ignore-not-found || true
           helm uninstall velero -n velero --ignore-not-found || true
 
+      - name: Delete orphaned VPC CNI ENIs
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=tag:Name,Values=task-manager-vpc" \
+            --query 'Vpcs[0].VpcId' --output text 2>/dev/null || echo "")
+          if [ -z "$VPC_ID" ] || [ "$VPC_ID" = "None" ]; then
+            echo "VPC not found, skipping ENI cleanup"
+            exit 0
+          fi
+          echo "Scanning VPC $VPC_ID for orphaned ENIs..."
+          ENI_IDS=$(aws ec2 describe-network-interfaces \
+            --filters \
+              "Name=vpc-id,Values=${VPC_ID}" \
+              "Name=status,Values=available" \
+            --query 'NetworkInterfaces[*].NetworkInterfaceId' \
+            --output text)
+          if [ -z "$ENI_IDS" ]; then
+            echo "No orphaned ENIs found"
+            exit 0
+          fi
+          for ENI in $ENI_IDS; do
+            echo "Deleting ENI $ENI..."
+            aws ec2 delete-network-interface --network-interface-id "$ENI"
+          done
+          echo "Done"
+
       - name: Terraform Init
         working-directory: ${{ env.WORKING_DIR }}
         run: terraform init

@@ -181,9 +181,8 @@ locals {
 }
 
 resource "aws_eks_addon" "cloudwatch_observability" {
-  cluster_name             = aws_eks_cluster.main.name
-  addon_name               = "amazon-cloudwatch-observability"
-  service_account_role_arn = aws_iam_role.node.arn
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "amazon-cloudwatch-observability"
 
   depends_on = [aws_eks_node_group.prod]
 }

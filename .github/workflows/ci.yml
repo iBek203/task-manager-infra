@@ -208,7 +208,7 @@ jobs:
         env:
           TF_VAR_db_password: ${{ secrets.TF_DB_PASSWORD }}
         run: |
-          terraform state rm module.eks.aws_eks_addon.cloudwatch_observability || true
+          terraform destroy -target=module.eks.aws_eks_addon.cloudwatch_observability -auto-approve || true
           terraform apply -auto-approve
 
       - name: Configure kubectl

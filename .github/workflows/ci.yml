@@ -44,6 +44,8 @@ jobs:
 
       - name: Init TFLint (main)
         working-directory: ${{ env.WORKING_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tflint --init
 
       - name: Run TFLint (main)
@@ -52,6 +54,8 @@ jobs:
 
       - name: Init TFLint (sonarqube)
         working-directory: terraform-sonarqube
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tflint --init
 
       - name: Run TFLint (sonarqube)

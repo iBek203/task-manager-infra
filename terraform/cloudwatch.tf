@@ -74,10 +74,8 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "ALB Request Count"
           region = var.aws_region
           view   = "timeSeries"
-          stat   = "Sum"
-          period = 60
           metrics = [
-            [{ expression = "SEARCH('{AWS/ApplicationELB,LoadBalancer}', 'RequestCount', 60)", id = "e1" }]
+            [{ expression = "SEARCH('{AWS/ApplicationELB,LoadBalancer} RequestCount', 'Sum', 60)", id = "e1" }]
           ]
         }
       },
@@ -91,10 +89,8 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "ALB HTTP 5xx Errors"
           region = var.aws_region
           view   = "timeSeries"
-          stat   = "Sum"
-          period = 60
           metrics = [
-            [{ expression = "SEARCH('{AWS/ApplicationELB,LoadBalancer}', 'HTTPCode_Target_5XX_Count', 60)", id = "e1" }]
+            [{ expression = "SEARCH('{AWS/ApplicationELB,LoadBalancer} HTTPCode_Target_5XX_Count', 'Sum', 60)", id = "e1" }]
           ]
         }
       },
@@ -108,10 +104,8 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "ALB Target Response Time (p90, s)"
           region = var.aws_region
           view   = "timeSeries"
-          stat   = "p90"
-          period = 60
           metrics = [
-            [{ expression = "SEARCH('{AWS/ApplicationELB,LoadBalancer}', 'TargetResponseTime', 60)", id = "e1" }]
+            [{ expression = "SEARCH('{AWS/ApplicationELB,LoadBalancer} TargetResponseTime', 'p90', 60)", id = "e1" }]
           ]
         }
       },
